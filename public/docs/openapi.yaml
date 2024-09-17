@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: Laravel
+  description: ''
+  version: 1.0.0
+servers:
+  -
+    url: 'http://localhost'
+paths:
+  /api/login:
+    post:
+      summary: ''
+      operationId: postApiLogin
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/register:
+    post:
+      summary: ''
+      operationId: postApiRegister
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/verify-otp:
+    post:
+      summary: ''
+      operationId: postApiVerifyOtp
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/resend-otp:
+    post:
+      summary: ''
+      operationId: postApiResendOtp
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/forgot-password:
+    post:
+      summary: ''
+      operationId: postApiForgotPassword
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: 'Must be a valid email address.'
+                  example: sporer.georgiana@example.net
+              required:
+                - email
+      security: []
+  /api/reset-password:
+    post:
+      summary: ''
+      operationId: postApiResetPassword
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: 'Must be a valid email address.'
+                  example: mromaguera@example.net
+                token:
+                  type: string
+                  description: ''
+                  example: iusto
+                password:
+                  type: string
+                  description: 'Must be at least 8 characters.'
+                  example: s>GRb/=_NN
+                password_confirmation:
+                  type: string
+                  description: 'Must be at least 8 characters.'
+                  example: ophzrcnhqzycjccoquexqmqwkmgmlbjawjtmeob
+              required:
+                - email
+                - token
+                - password
+                - password_confirmation
+      security: []
+  /api/oauth/token:
+    post:
+      summary: "Authorize a client to access the user's account."
+      operationId: authorizeAClientToAccessTheUsersAccount
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+tags:
+  -
+    name: Endpoints
+    description: ''

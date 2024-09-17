@@ -1,0 +1,59 @@
+Install uniformserver -> https://www.uniformserver.com/
+- letakkan instalasi di folder yang di inginkan
+- 
+
+Install php82 -> https://sourceforge.net/projects/miniserver/files/Uniform%20Server%20ZeroXV/ZeroXV%20Modules/ZeroXV_php_8_2_21.exe/download
+- letakkan file exe di folder "..\UniServerZ\ZeroXV_php_8_2_21.exe"
+- jalankan program
+- tambahkan di environment variabel "..\UniServerZ\core\php82"
+
+install mysql workbench -> https://dev.mysql.com/downloads/file/?id=528765 
+- buat db baru
+
+install composer -> https://getcomposer.org/download/
+- tambahkan di file cli -> ..\UniServerZ\core\php82\php-cli.ini
+  "
+   extension=fileinfo
+   extension=sodium
+  "
+
+cek version php
+- php -v
+
+cek version composer
+- composer -v
+
+cara menjalankan program
+- bukak file projek
+- bukak terminal
+- Install Dependensi Composer -> ketik di terminal "composer install"
+- Salin atau Buat File .env -> ketik di terminal "cp .env.example .env"
+- Generate APP_KEY -> ketik di terminal "php artisan key:generate"
+- Konfigurasi Database di file .env -> {
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=nama_database
+    DB_USERNAME=root
+    DB_PASSWORD=password
+  }
+- Migrasi dan Seed Database -> ketik di terminal "php artisan migrate"
+  - Jika ada data awal yang perlu diisi ke dalam database (seeder), jalankan: "php artisan db:seed"
+- Menggunakan UniServerZ (Apache)
+  - Jika Anda menggunakan UniServerZ, pindahkan proyek Laravel ke folder www di dalam direktori UniServerZ.
+    -   letakkan folder projek di folder -> ..\UniServerZ\www\project-market
+  - bukak UniServerZ
+  - klik tab php -> pilih "edit basic and module" -> pilih "php extension enabled/disabled"
+    - centang ["dba", "exif", fileinfo", "gd", "openssl", "pdomysql", "sockets", "sysvshm"]
+- cara melihat list api yang ada
+  - php artisan route:list
+
+how to use smtp send email
+*To use Gmail as a mail server for sending emails, you can utilize the Gmail SMTP (Simple Mail Transfer Protocol) server. Here are the general steps:
+
+-first if you are using windows add this to host file in path: C:\Windows\System32\drivers\etc 127.0.0.1 mailpit
+
+-Enable Less Secure Apps:
+*-Go to your Google Account settings. Navigate to "Security." Find the "Less secure app access" section and turn it on. Note that this option makes your account less secure, so use it with caution. Generate an App Password:
+*-If you have two-factor authentication enabled (which is recommended), you may need to generate an "App Password" for your application. Go to your Google Account settings, navigate to "Security," and find "App passwords." Use SMTP Server:
+*-Set up your email-sending script or application to use Gmail's SMTP server. Here are the SMTP settings: SMTP Server: smtp.gmail.com Port: 587 Username: Your full Gmail address (including @gmail.com) Password: Your Gmail password or the App Password you generated.
