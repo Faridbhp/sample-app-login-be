@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -17,12 +18,51 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
+            // Log semua input untuk memastikan input diterima
+            Log::info('Request received: ' . json_encode($request->all()));
+
+            // Tentukan field yang valid
+            $validFields = [
+                'name',
+                'email',
+                'no_telepon',
+                'password',
+            ];
+
+            // Periksa jika ada field yang tidak diizinkan
+            $inputFields = array_keys($request->all());
+            $invalidFields = array_diff($inputFields, $validFields);
+
+            // Jika ada field yang tidak valid, kembalikan pesan error
+            if (!empty($invalidFields)) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Invalid fields provided.',
+                    'invalid_fields' => $invalidFields
+                ], 400);
+            }
+
             // Validasi input dari request
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'no_telepon' => 'required|string|max:15',
+                'password' => 'required|string|min:8',
+            ]);
+
+            // Jika validasi gagal, kembalikan pesan error
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Validation error.',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
 
             // Cek apakah email sudah ada di database
             $existingUser = User::where('email', $request->email)->first();
             if ($existingUser) {
-                return response()->json(['status' => 'failed', 'error' => 'Email already exists.'], 409);
+                return response()->json(['status' => 'failed', 'message' => 'Email already exists.'], 409);
             }
 
             $user = User::create([
@@ -39,15 +79,7 @@ class AuthController extends Controller
             // Log the saved user details
             Log::info('User saved successfully after registration.');
 
-            $this->sendOtpEmail($user);
-
-            if ($user->otp_expires_at < now()) {
-                // Tandai OTP sebagai kedaluwarsa dan tolak verifikasi
-                $user->otp = null;
-                $user->save();
-
-                return response()->json(['status' => 'failed', 'message' => 'Invalid OTP or expired.'], 401);
-            }
+            $this->sendRegisterTokenEmail($user);
 
             $expiresAt = $user->otp_expires_at->toIso8601String(); // Format waktu sesuai kebutuhan
 
@@ -64,7 +96,7 @@ class AuthController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Tangkap kesalahan validasi
             Log::warning('Validation failed: ' . json_encode($e->errors()));
-            return response()->json(['error' => 'Invalid input.', 'details' => $e->errors()], 422);
+            return response()->json(['error' => 'Invalid input.'], 422);
         } catch (\Exception $e) {
             // Tangkap kesalahan umum lainnya
             Log::error('Unexpected error: ' . $e->getMessage());
@@ -130,7 +162,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $user = User::where('email', $request->email)->first();
-
+        Log::info('Mencari  $user dengan email: ' . $user);
         if (!$user || $user->otp !== $request->otp) {
             // Tambahkan output debug atau log
             Log::error("Invalid OTP - User: " . ($user ? $user->id : 'null') . ", Entered OTP: " . $request->otp);
@@ -151,6 +183,7 @@ class AuthController extends Controller
 
         // Clear OTP setelah verifikasi
         $user->otp = null;
+        $user->email_verified_at = now();
         $user->save();
 
         return response()->json(['token' => $token, 'message' => 'OTP verified.']);
@@ -192,4 +225,19 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    protected function sendRegisterTokenEmail($user)
+    {
+        $otp = $user->otp;
+
+        // Membuat link verifikasi email
+        $verificationUrl = "http://localhost:5173/login?email={$user->email}&token={$otp}";
+
+
+        Mail::raw("Your link for email verification is: $verificationUrl", function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Email Verification Link');
+        });
+    }
+
 }
