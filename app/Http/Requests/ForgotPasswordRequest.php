@@ -17,4 +17,13 @@ class ForgotPasswordRequest extends FormRequest
             'email' => 'required|email|exists:users,email',
         ];
     }
+
+    public function messages()
+    {
+        return [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.exists' => 'Email tidak ditemukan.',
+        ];
+    }
 }
