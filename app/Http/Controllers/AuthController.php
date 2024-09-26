@@ -117,35 +117,32 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Generate dan kirim OTP baru
-        $otp = Str::random(6);
-        $user->otp = $otp;
-        $user->otp_expires_at = now()->addMinute(30); // Sesuaikan dengan kadaluarsa yang dinginkan 
+        // lakukan pemeriksaan email_verified_at === null
+        if ($user->email_verified_at === null) {
+            // Pemeriksaan waktu kadaluarsa sebelum verifikasi OTP
+            if ($user->otp_expires_at < now()) {
+                // Generate dan kirim OTP baru
+                $otp = Str::random(6);
+                $user->otp = $otp;
+                $user->otp_expires_at = now()->addMinute(30); // Sesuaikan dengan kadaluarsa yang dinginkan 
+                $user->save();
 
-        // Check if the user is saved successfully
-        if ($user->save()) {
-            // Log the saved user details
-            Log::info('User logged in successfully: ' . json_encode($user->toArray()));
-
-            $this->sendOtpEmail($user);
-
-            $expiresAt = $user->otp_expires_at->toIso8601String(); // Format waktu sesuai kebutuhan
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Login successful. OTP sent to ' . $user->email,
-                'email' => $user->email,
-                'expires_at' => $expiresAt,
-            ]);
-        } else {
-            // Log if there's an issue with saving
-            Log::error('Failed to log in user: ' . json_encode($user->toArray()));
-
+                $this->sendRegisterTokenEmail($user);
+            }
             return response()->json([
                 'status' => 'error',
-                'error' => 'An error occurred while processing the request.'
-            ], 500);
+                'message' => 'Verifikasi akun anda terlebih dahulu, link verifikasi dikirim ke email anda'
+            ]);
         }
+
+        // Log the saved user details
+        Log::info('User logged in successfully: ' . json_encode($user->toArray()));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Login successful',
+            'email' => $user->email
+        ]);
     }
 
     // Metode untuk mengirimkan email OTP
@@ -239,5 +236,4 @@ class AuthController extends Controller
                 ->subject('Email Verification Link');
         });
     }
-
 }
