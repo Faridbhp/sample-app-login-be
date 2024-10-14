@@ -21,7 +21,7 @@ class ForgotPasswordController extends Controller
         $this->resetPasswordService = $resetPasswordService;
     }
 
-    public function sendResetLinkEmail(Request $request): JsonResponse
+    public function forgotPassword(Request $request): JsonResponse
     {
         try {
             // Validasi email kosong

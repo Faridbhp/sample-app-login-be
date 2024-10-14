@@ -22,57 +22,8 @@ class ResetPasswordService
                 ->subject('Reset Link');
         });
         return [
-            'status' => "sukses",
-            'message' => "sukses kirim",
-        ];
-    }
-
-    public function resetPassword(string $email, string $password, string $passwordConfirmation, string $token)
-    {
-        // Mencari entri token dari database berdasarkan email
-        $passwordReset = PasswordReset::where('email', $email)->first();
-
-        // Jika token tidak ditemukan atau email tidak ada di database
-        if (!$passwordReset) {
-            return [
-                'message' => 'Email tidak ditemukan atau token tidak valid.',
-            ];
-        }
-
-        Log::info("passwordReset " . json_encode($passwordReset->toArray()));
-
-        // Memverifikasi apakah token yang diberikan cocok dengan yang ada di database
-        // if (!Hash::check($token, $passwordReset->token)) { // pengecekan jika di encryp
-        if ($token !== $passwordReset->token) {
-            return [
-                'message' => 'Token tidak valid.',
-            ];
-        }
-
-        // Memastikan password dan password confirmation cocok
-        if ($password !== $passwordConfirmation) {
-            return [
-                'message' => 'Password dan konfirmasi password tidak cocok.',
-            ];
-        }
-        // Menemukan user berdasarkan email
-        $user = User::where('email', $email)->first();
-
-        // Jika user tidak ditemukan
-        if (!$user) {
-            return [
-                'message' => 'User tidak ditemukan.',
-            ];
-        }
-
-        // Mengupdate password user
-        $user->password = Hash::make($password);
-        $user->save();
-        // Menghapus token setelah password direset
-        $passwordReset->delete();
-
-        return [
-            'message' => 'Password berhasil direset.',
+            'status' => "success",
+            'message' => "Email reset password sudah dikirim ke email anda",
         ];
     }
 }

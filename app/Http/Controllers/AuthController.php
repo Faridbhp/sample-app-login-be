@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordReset;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +37,7 @@ class AuthController extends Controller
             // Jika ada field yang tidak valid, kembalikan pesan error
             if (!empty($invalidFields)) {
                 return response()->json([
-                    'status' => 'failed',
+                    'status' => 'error',
                     'message' => 'Invalid fields provided.',
                     'invalid_fields' => $invalidFields
                 ], 400);
@@ -53,7 +54,7 @@ class AuthController extends Controller
             // Jika validasi gagal, kembalikan pesan error
             if ($validator->fails()) {
                 return response()->json([
-                    'status' => 'failed',
+                    'status' => 'error',
                     'message' => 'Validation error.',
                     'errors' => $validator->errors()
                 ], 422);
@@ -62,7 +63,7 @@ class AuthController extends Controller
             // Cek apakah email sudah ada di database
             $existingUser = User::where('email', $request->email)->first();
             if ($existingUser) {
-                return response()->json(['status' => 'failed', 'message' => 'Email already exists.'], 409);
+                return response()->json(['status' => 'error', 'message' => 'Email already exists.'], 409);
             }
 
             $user = User::create([
@@ -95,7 +96,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Server error, please try again later.'], 500);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Tangkap kesalahan validasi
-            Log::warning('Validation failed: ' . json_encode($e->errors()));
+            Log::warning('Validation error: ' . json_encode($e->errors()));
             return response()->json(['error' => 'Invalid input.'], 422);
         } catch (\Exception $e) {
             // Tangkap kesalahan umum lainnya
@@ -114,7 +115,7 @@ class AuthController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Invalid email or password.'
-            ], 401);
+            ]);
         }
 
         // lakukan pemeriksaan email_verified_at === null
@@ -143,17 +144,6 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'email' => $user->email
         ]);
-    }
-
-    // Metode untuk mengirimkan email OTP
-    protected function sendOtpEmail($user)
-    {
-        $otp = $user->otp;
-
-        Mail::raw("Your OTP is: $otp", function ($message) use ($user) {
-            $message->to($user->email)
-                ->subject('OTP for Authentication');
-        });
     }
 
     public function verifyOtp(Request $request)
@@ -214,12 +204,82 @@ class AuthController extends Controller
             ]);
         } else {
             // Log if there's an issue with saving
-            Log::error('Failed to resend OTP to user: ' . json_encode($user->toArray()));
+            Log::error('error to resend OTP to user: ' . json_encode($user->toArray()));
 
             return response()->json([
                 'status' => 'error',
                 'error' => 'An error occurred while processing the request.'
             ], 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        try {
+            // Log semua input untuk memastikan input diterima
+            Log::info('Request received: ' . json_encode($request->all()));
+
+            // Mencari entri token dari database berdasarkan email
+            $passwordReset = PasswordReset::where('email', $request->email)->first();
+            // Jika token tidak ditemukan atau email tidak ada di database
+            if (!$passwordReset) {
+                return [
+                    'message' => 'Email tidak ditemukan atau token tidak valid.',
+                    'status' => 'error',
+                ];
+            }
+            Log::info("passwordReset " . json_encode($passwordReset->toArray()));
+
+            // Memverifikasi apakah token yang diberikan cocok dengan yang ada di database
+            // if (!Hash::check($token, $passwordReset->token)) { // pengecekan jika di encryp
+            if ($request->token !== $passwordReset->token) {
+                return [
+                    'message' => 'Token tidak valid.',
+                    'status' => 'error',
+                ];
+            }
+
+            // Memastikan password dan password confirmation cocok
+            if ($request->password !== $request->confirmPassword) {
+                return [
+                    'message' => 'Password dan konfirmasi password tidak cocok.',
+                    'status' => 'error',
+                ];
+            }
+
+            // Menemukan user berdasarkan email
+            $user = User::where('email', $request->email)->first();
+
+            // Jika user tidak ditemukan
+            if (!$user) {
+                return [
+                    'message' => 'User tidak ditemukan.',
+                    'status' => 'error',
+                ];
+            }
+
+            // Mengupdate password user
+            $user->password = Hash::make($request->password);
+            $user->save();
+            // Menghapus token setelah password direset
+            $passwordReset->delete();
+
+            return [
+                'message' => 'Password berhasil direset.',
+                'status' => 'success',
+            ];
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Tangkap kesalahan terkait database, misal koneksi database gagal
+            Log::error('Database error: ' . $e->getMessage());
+            return response()->json(['error' => 'Server error, please try again later.'], 500);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Tangkap kesalahan validasi
+            Log::warning('Validation error: ' . json_encode($e->errors()));
+            return response()->json(['error' => 'Invalid input.'], 422);
+        } catch (\Exception $e) {
+            // Tangkap kesalahan umum lainnya
+            Log::error('Unexpected error: ' . $e->getMessage());
+            return response()->json(['error' => 'Unexpected error occurred. Please try again later.'], 500);
         }
     }
 
@@ -234,6 +294,17 @@ class AuthController extends Controller
         Mail::raw("Your link for email verification is: $verificationUrl", function ($message) use ($user) {
             $message->to($user->email)
                 ->subject('Email Verification Link');
+        });
+    }
+
+    // Metode untuk mengirimkan email OTP
+    protected function sendOtpEmail($user)
+    {
+        $otp = $user->otp;
+
+        Mail::raw("Your OTP is: $otp", function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('OTP for Authentication');
         });
     }
 }
