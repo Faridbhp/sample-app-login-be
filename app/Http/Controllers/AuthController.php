@@ -136,13 +136,20 @@ class AuthController extends Controller
             ]);
         }
 
+        // Hapus token lama
+        $user->tokens()->delete();
+
+        // Buat personal access token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         // Log the saved user details
         Log::info('User logged in successfully: ' . json_encode($user->toArray()));
 
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful',
-            'email' => $user->email
+            'email' => $user->email,
+            'token' => $token
         ]);
     }
 
@@ -281,6 +288,68 @@ class AuthController extends Controller
             Log::error('Unexpected error: ' . $e->getMessage());
             return response()->json(['error' => 'Unexpected error occurred. Please try again later.'], 500);
         }
+    }
+
+    public function changePassword(Request $request)
+    {
+        Log::info("requs data" . $request);
+        // // Validasi input
+        // Tentukan field yang valid
+        $validFields = [
+            'old_password',
+            'new_password',
+            'confirm_password',
+        ];
+
+        // Periksa jika ada field yang tidak diizinkan
+        $inputFields = array_keys($request->all());
+        $invalidFields = array_diff($inputFields, $validFields);
+
+        // Jika ada field yang tidak valid, kembalikan pesan error
+        if (!empty($invalidFields)) {
+            $errors = array_values($invalidFields);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid fields provided.',
+                'invalid_fields' => $errors
+            ]);
+        }
+
+        // Validasi input dari request
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required|string|min:8',
+            'new_password' => 'required|string|min:8',
+            'confirm_password' => 'required|string|min:8|same:new_password',
+        ]);
+
+        // Jika validasi gagal, kembalikan pesan error
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validasi gagal.',
+                'errors' => $errors,
+            ]);
+        }
+
+        $user = $request->user();
+        Log::info("data user" . $user);
+
+        // cek password lama apakah sama dengan yang tersimpan di db
+        if (!$user || !Hash::check($request->old_password, $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Password lama tidak valid.'
+            ]);
+        }
+
+        $user->password = $request->new_password;
+        $user->save();
+        // Kembalikan respon sukses
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Password changed successfully.'
+        ]);
     }
 
     protected function sendRegisterTokenEmail($user)

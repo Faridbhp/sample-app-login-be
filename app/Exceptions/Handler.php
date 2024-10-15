@@ -6,6 +6,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Auth\AuthenticationException;
 
 class Handler extends ExceptionHandler
 {
@@ -33,6 +34,13 @@ class Handler extends ExceptionHandler
 
             // Menangani kesalahan umum
             return response()->json(['error' => 'Unexpected error occurred.'], 500);
+        }
+
+        if ($exception instanceof AuthenticationException) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token tidak valid',
+            ]);
         }
 
         // Jika bukan permintaan JSON, gunakan perilaku default
