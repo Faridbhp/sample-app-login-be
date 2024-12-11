@@ -20,7 +20,7 @@ class AuthController extends Controller
     {
         try {
             // Log semua input untuk memastikan input diterima
-            Log::info('Request received: ' . json_encode($request->all()));
+            Log::info('register Request received: ' . json_encode($request->all()));
 
             // Tentukan field yang valid
             $validFields = [
@@ -108,6 +108,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         // Validasi input dari request
+        Log::info('login Request received: ' . json_encode($request->all()));
 
         $user = User::where('email', $request->email)->first();
 
