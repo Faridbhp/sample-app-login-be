@@ -54,6 +54,14 @@ how to use smtp send email
 -first if you are using windows add this to host file in path: C:\Windows\System32\drivers\etc 127.0.0.1 mailpit
 
 -Enable Less Secure Apps:
-*-Go to your Google Account settings. Navigate to "Security." Find the "Less secure app access" section and turn it on. Note that this option makes your account less secure, so use it with caution. Generate an App Password:
-*-If you have two-factor authentication enabled (which is recommended), you may need to generate an "App Password" for your application. Go to your Google Account settings, navigate to "Security," and find "App passwords." Use SMTP Server:
-*-Set up your email-sending script or application to use Gmail's SMTP server. Here are the SMTP settings: SMTP Server: smtp.gmail.com Port: 587 Username: Your full Gmail address (including @gmail.com) Password: Your Gmail password or the App Password you generated.
+*-Go to your Google Account settings. Navigate to "Security." Find the "Less secure app access" section and turn it on. 
+  Note that this option makes your account less secure, so use it with caution. Generate an App Password:
+*-If you have two-factor authentication enabled (which is recommended), you may need to generate an "App Password" for your application. 
+  Go to your Google Account settings, navigate to "Security," and find "App passwords." Use SMTP Server:
+*-Set up your email-sending script or application to use Gmail's SMTP server. 
+  Here are the SMTP 
+  settings: 
+  SMTP Server: smtp.gmail.com 
+  Port: 587 
+  Username: Your full Gmail address (including @gmail.com) 
+  Password: Your Gmail password or the App Password you generated.
